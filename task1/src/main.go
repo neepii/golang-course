@@ -17,6 +17,27 @@ type githubRepoUrl struct {
 	name  string
 }
 
+type githubRepoInfo struct {
+	Name string `json:"name"`
+	Description string `json:"description"`
+	Stargazers int `json:"stargazers_count"`
+	Forkers int `json:"fork_count"`
+	Creationdate string  `json:"created_at"`
+}
+
+
+func prettyPrintGithubRepo(info githubRepoInfo ) {
+	format :=
+		"Info about repo:" +
+			"Name: %s\n" +
+			"Description: %s\n" +
+			"Star count: %d\n" +
+			"Fork count: %d\n" +
+			"Date: %s\n"
+	fmt.Printf(format,
+		info.Name, info.Description, info.Stargazers, info.Forkers, info.Creationdate)
+}
+
 func isValidUrl(str string) bool {
 	match, _ := regexp.MatchString("https://github.com/[A-Za-z-]+/[A-Za-z-]+", str)
 	return match
@@ -42,24 +63,25 @@ func usage() {
 	os.Exit(2)
 }
 
-func getJson(url string) (map[string]interface{}, error) {
+func getGithubRepoInfo(url string) (githubRepoInfo, error) {
+	var dat githubRepoInfo
 	repo, err := parseUrl(url)
 	if err != nil {
-		return nil, err
+		return dat, err
 	}
 	res, err := http.Get("https://api.github.com/repos/" + repo.owner + "/" + repo.name)
 	if err != nil {
-		return nil, errors.New("Error making http request")
+		return dat, errors.New("Error making http request")
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New("Bad request")
+		return dat, errors.New("Bad request")
 	}
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.New("Can't read response body")
+		return dat, errors.New("Can't read response body")
 	}
-	var dat map[string]interface{}
+
 	if err := json.Unmarshal(bodyBytes, &dat); err != nil {
 		panic(err)
 	}
@@ -78,15 +100,10 @@ func main() {
 	args := flag.Args()
 	url := args[0]
 
-	json, err := getJson(url)
+	info, err := getGithubRepoInfo(url)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println(json["name"])
-	fmt.Println(json["description"])
-	fmt.Println(json["stargazers_count"])
-	fmt.Println(json["fork_count"])
-	fmt.Println(json["created_at"])
-
+	prettyPrintGithubRepo(info)
 }
