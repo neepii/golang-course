@@ -21,7 +21,7 @@ type githubRepoInfo struct {
 	Name string `json:"name"`
 	Description string `json:"description"`
 	Stargazers int `json:"stargazers_count"`
-	Forkers int `json:"fork_count"`
+	Forkers int `json:"forks"`
 	Creationdate string  `json:"created_at"`
 }
 
